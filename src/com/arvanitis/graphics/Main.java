@@ -6,6 +6,11 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -21,11 +26,21 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class Main
 {
+	private static final String dblink = "jdbc:sqlserver://127.0.0.1:1433";
+	private static final String dbuser = "test";
+	private static final String dbpass = "test";
+
+	private static final String DBDRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+	
 	static JTable table;
 	static File file = new File("C:/Users/user/Downloads/InvoiceTax.txt");
 
 	public static void main(String[] args)
 	{
+		Statement st = null,st2;
+		ResultSet rs = null;
+		Connection con = null;
+		
 		table = new JTable();
 		Vector headers = new Vector();
 		Vector data2 = new Vector();
@@ -37,8 +52,15 @@ public class Main
 		int tick = 0, c = 0 ,r = 0;
 		String date = null, nav = null, shares = null, assets = null;
 		
+		
 		try
 		{
+			Class.forName(DBDRIVER);
+			con = DriverManager.getConnection(dblink, dbuser, dbpass);
+
+			st = con.createStatement();
+			rs = st.executeQuery("Select userid from ZAccess.dbo.Clients where userid like 'a%'");
+			
 			fis = new FileInputStream(new File("C:/Users/user/Downloads/ACIM_HistoricalNav (3).xls"));
 
 			HSSFWorkbook workbook = new HSSFWorkbook(fis);
@@ -119,9 +141,6 @@ public class Main
 
 			workbook.close();
 			//fis.close();
-			
-			TableModel model = table.getModel();
-	        FileWriter excel = new FileWriter(file);
 	        
 	        System.out.println(data2);
 	        headers.clear();
@@ -138,18 +157,21 @@ public class Main
 
 			JFrame f = new JFrame();//creating instance of JFrame  
 			          
-			//JButton b = new JButton("click");//creating instance of JButton  
-			//b.setBounds(130,100,100, 40);//x axis, y axis, width, height  
+			JButton b = new JButton("Print Sum");//creating instance of JButton  
+			b.setBounds(0,0,100, 40);//x axis, y axis, width, height  
 			          
-			//f.add(b);//adding button in JFrame  
+			f.add(b, BorderLayout.SOUTH);//adding button in JFrame  
 			
-			f.add(scroll, BorderLayout.CENTER);
+			f.add(scroll);
 			          
 			f.setSize(400,500);//400 width and 500 height
 			f.setResizable(true);
 			//f.setLayout(null);//using no layout managers  
 			f.setVisible(true);//making the frame visible 
 	        
+			
+			TableModel model = table.getModel();
+	        FileWriter excel = new FileWriter(file);
 	        
 	        
 	        for(int i = 0; i < model.getColumnCount(); i++){
@@ -168,7 +190,7 @@ public class Main
 	        excel.close();
 	        
 		}
-		catch (IOException e)
+		catch (IOException | SQLException | ClassNotFoundException e)
 		{
 			e.printStackTrace();
 		}
